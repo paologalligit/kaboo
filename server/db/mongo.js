@@ -5,7 +5,7 @@ const mongoConfig = {
     db: process.env.MONGO_DB,
 }
 
-const collections = ['user', 'word']
+const collections = ['user', 'word', 'room']
 
 let clientPromise = null
 

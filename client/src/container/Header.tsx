@@ -2,15 +2,16 @@ import React from 'react'
 import { Nav } from 'react-bootstrap'
 
 interface Props {
-    logout: () => void
+    logout: () => void, 
+    text: string
 }
 
-const Header = ({ logout }: Props) => {
+const Header = ({ logout, text }: Props) => {
     return (
         <>
             <Nav className="justify-content-end" activeKey="/home">
                 <Nav.Item>
-                    <Nav.Link onClick={() => logout()}>LOGOUT</Nav.Link>
+                    <Nav.Link onClick={() => logout()}>{text}</Nav.Link>
                 </Nav.Item>
             </Nav>
         </>

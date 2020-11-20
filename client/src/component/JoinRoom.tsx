@@ -1,15 +1,27 @@
 import React, { useState } from 'react'
 import { Button, Modal } from 'react-bootstrap'
+import axios from 'axios'
 
-interface Props {
+import config from '../env'
+import { useHistory } from 'react-router-dom'
 
-}
+const JoinRoom = () => {
+    const history = useHistory()
 
-const JoinRoom = (props: Props) => {
     const [show, setShow] = useState(false)
     const [code, setCode] = useState('')
 
-    console.log(code)
+    const onJoinClick = () => {
+        axios.get(`${config.API_URL}/room/${code}`)
+            .then(res => {
+                history.push(`/room/${code}`)
+                window.location.reload()
+            })
+            .catch(err => {
+                console.error(err)
+                alert(`Room ${code} does not exist`)
+            })
+    }
 
     return (
         <>
@@ -20,7 +32,7 @@ const JoinRoom = (props: Props) => {
                 </Modal.Header>
 
                 <Modal.Body>
-                    <div style={{ display: 'flex', justifyContent: 'center'}}>
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
                         <label>Insert code: </label>
                         <input onChange={e => setCode(e.target.value)} />
                     </div>
@@ -28,7 +40,7 @@ const JoinRoom = (props: Props) => {
 
                 <Modal.Footer>
                     <Button variant="secondary" onClick={() => setShow(false)}>Close</Button>
-                    <Button variant="primary">Join Room</Button>
+                    <Button variant="primary" onClick={() => onJoinClick()} disabled={code === ''}>Join Room</Button>
                 </Modal.Footer>
             </Modal.Dialog>}
 

@@ -1,20 +1,26 @@
 import React, { useState } from 'react'
 import { Button, Modal, Row, Col, Container, Spinner } from 'react-bootstrap'
+import axios from 'axios'
 
-interface Props {
+import config from '../env'
+import { useHistory } from 'react-router-dom'
 
-}
+const CreateNewRoom = () => {
+    const history = useHistory()
 
-const CreateNewRoom = (props: Props) => {
     const [show, setShow] = useState(false)
     const [name, setName] = useState('')
     const [loading, setLoading] = useState(false)
 
     const onCreateRoom = () => {
         setLoading(true)
-        setTimeout(() => {
-            setLoading(false)
-        }, 3000)
+        axios.post(`${config.API_URL}/room`, { name })
+            .then(res => {
+                const { id } = res.data.room
+                history.push(`/room/${id}`)
+                window.location.reload()
+            })
+            .catch(err => console.error(err))
     }
 
     return (
