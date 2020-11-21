@@ -13,7 +13,10 @@ const {
     userLeave,
     getUsersInRoom,
     splitTeams,
-    setTeams
+    setTeams,
+    setOnePlayerReady,
+    roomPlayersAllReady,
+    teamJoin
 } = require('./utils/room')
 
 const app = express()
@@ -120,12 +123,21 @@ const io = require('socket.io')(server, options)
 
 io.on('connection', socket => {
     console.log('connection...')
-    socket.on('joinRoom', ({ name, room }) => {
+    socket.on('joinWaitingRoom', ({ name, room }) => {
         userJoin(socket.id, name, room)
-        console.log('joined new user: ', name)
         socket.join(room)
 
         io.to(room).emit('roomUsers', getRoomUsers(room))
+    })
+
+    socket.on('joinRoom', ({ name, roomId, totPlayers }) => {
+        console.log('joiningn ', name)
+        userJoin(socket.id, name, roomId)
+        socket.join(roomId)
+
+        if (roomPlayersAllReady(roomId, totPlayers)) {
+            io.to(roomId).emit('startCountdown', { time: 5 })
+        }
     })
 
     socket.on('setTeams', ({ teamOne, teamTwo, roomId }) => {

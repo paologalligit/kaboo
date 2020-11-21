@@ -25,6 +25,11 @@ const userJoin = (id, name, room) => {
     return user
 }
 
+const teamJoin = (id, teams, room) => {
+    if (!(room in rooms))
+        rooms[room] = teams
+}
+
 const getRoomUsers = room => {
     return rooms[room].map(user => user.name)
 }
@@ -61,13 +66,13 @@ const splitTeams = users => {
 }
 
 const setTeams = (teamOne, teamTwo, id) => {
-    console.log('before anything: ', teamOne, teamTwo)
     rooms[id] = rooms[id].map(user => {
         return {
             ...user,
             team: teamOne.filter(u => u.name === user.name).length > 0 ? 0 : 1
         }
     })
+
     return rooms[id]
 }
 
@@ -90,6 +95,24 @@ const shuffle = array => {
     return array;
 }
 
+const setOnePlayerReady = roomId => {
+    const roomEnv = rooms[roomId]
+
+    if (roomEnv.playersReady) {
+        roomEnv.playersReady++
+    } else {
+        roomEnv.playersReady = 1
+    }
+    console.log('right after set one plauyer: ', rooms[roomId])
+    //console.log('accessed room ', roomId, ' with ', roomEnv.playersReady, ' players ready')
+}
+
+const roomPlayersAllReady = (roomId, tot) => {
+    const len = rooms[roomId].length
+    console.log('the room: ', rooms[roomId], ' and the tot: ', tot)
+    return len === tot
+}
+
 module.exports = {
     getRoomId,
     userJoin,
@@ -97,5 +120,8 @@ module.exports = {
     userLeave,
     getUsersInRoom,
     splitTeams,
-    setTeams
+    setTeams,
+    setOnePlayerReady,
+    roomPlayersAllReady,
+    teamJoin
 }

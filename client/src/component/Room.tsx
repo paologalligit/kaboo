@@ -34,7 +34,7 @@ const Room = ({ socket, router: { match } }: Props) => {
             })
             .catch(err => console.error(err))
 
-        socket.emit('joinRoom', { name: user.userName, room: id })
+        socket.emit('joinWaitingRoom', { name: user.userName, room: id })
 
         socket.on('startGame', (users: string) => {
             history.push(

@@ -14,9 +14,6 @@ const RoomInfo = ({ socketConnection, userName }: Props) => {
             console.log('users: ', users)
             setUsers(users.filter(name => name !== userName))
         })
-        return () => {
-
-        }
     }, [])
 
     return (
