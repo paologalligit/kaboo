@@ -123,8 +123,7 @@ const roomPlayersAllReady = (roomId, tot) => {
 const createTurns = roomId => {
     if (turns[roomId] && turns[roomId].guessers) {
         // turns already created
-        const { guessers, pointer, len } = turns[roomId]
-        console.log('turns already created: ', turns[roomId])
+        const { guessers } = turns[roomId]
         return guessers
     } else {
         const users = rooms[roomId]

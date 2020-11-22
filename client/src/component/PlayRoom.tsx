@@ -67,6 +67,7 @@ const PlayRoom = ({ socket, router: { location: { search, state: { users, } }, m
         socket.on('roles', ({ role }: { role: string }) => {
             console.log('got new role: ', role)
             setRole(role)
+            socket.emit('getWord', { requestingUser: user, roomId, team, seed: getSeed() })
         })
 
         socket.on('word', ({ word, forbidden }: CardResponse) => {
@@ -99,7 +100,6 @@ const PlayRoom = ({ socket, router: { location: { search, state: { users, } }, m
         } else {
             setCountDown(false)
             socket.emit('getRoles', { requestingUser: user, team, roomId })
-            socket.emit('getWord', { requestingUser: user, roomId, team, seed: getSeed() })
             startWordCounter(wordCounter)
         }
     }
