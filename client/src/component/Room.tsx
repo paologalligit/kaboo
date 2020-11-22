@@ -57,8 +57,8 @@ const Room = ({ socket, router: { match } }: Props) => {
         })
             .then(res => {
                 const { teamOne, teamTwo } = res.data
-                socket.emit('setTeams', { teamOne, teamTwo, roomId: id })
                 setLoading(false)
+                socket.emit('setTeams', { teamOne, teamTwo, roomId: id })
             })
             .catch(err => console.error(err))
     }

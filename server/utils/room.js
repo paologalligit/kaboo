@@ -1,4 +1,5 @@
 const rooms = {}
+const turns = {}
 
 const getRoomId = () => {
     let text = ''
@@ -22,6 +23,13 @@ const userJoin = (id, name, room) => {
         rooms[room] = [user]
     }
 
+    return user
+}
+
+const userJoinWithTeam = (id, name, room, team) => {
+    const user = userJoin(id, name, room)
+    user.team = team
+    console.log('useds joined room ', room, ': ', rooms[room])
     return user
 }
 
@@ -103,14 +111,68 @@ const setOnePlayerReady = roomId => {
     } else {
         roomEnv.playersReady = 1
     }
-    console.log('right after set one plauyer: ', rooms[roomId])
     //console.log('accessed room ', roomId, ' with ', roomEnv.playersReady, ' players ready')
 }
 
 const roomPlayersAllReady = (roomId, tot) => {
     const len = rooms[roomId].length
-    console.log('the room: ', rooms[roomId], ' and the tot: ', tot)
+
     return len === tot
+}
+
+const createTurns = roomId => {
+    if (turns[roomId] && turns[roomId].guessers) {
+        // turns already created
+        const { guessers, pointer, len } = turns[roomId]
+        console.log('turns already created: ', turns[roomId])
+        return guessers
+    } else {
+        const users = rooms[roomId]
+
+        const one = users.filter(u => u.team === 0)
+        const two = users.filter(u => u.team === 1)
+
+        const currentTurns = interleave(one, two)
+
+        turns[roomId] = { guessers: currentTurns, pointer: 0, len: currentTurns.length }
+
+        return currentTurns
+    }
+}
+
+const incrementPointer = roomId => {
+    const { pointer, len } = turns[roomId]
+    turns[roomId].pointer = (pointer + 1) % len
+}
+
+const interleave = ([x, ...xs], ys = []) =>
+    x === undefined
+        ? ys
+        : [x, ...interleave(ys, xs)]
+
+const getWordForRoom = roomId => turns[roomId].words
+
+const setWordForRoom = (word, roomId) => {
+    turns[roomId].words = word
+}
+
+const getGuesserForRoom = roomId => {
+    const { guessers, pointer, len } = turns[roomId]
+    return guessers[pointer % len]
+}
+
+const isUserRequestingTheGuesser = (user, roomId) => {
+    //console.log('is user the guesser: ', user, getGuesserForRoom(roomId).name)
+    return getGuesserForRoom(roomId).name === user
+}
+
+const getRoleInTurn = (isGuesser, team, roomId) => {
+    if (isGuesser) return 'Guesser'
+    const user = getGuesserForRoom(roomId)
+    console.log('the guessere user: ', user)
+    if (user.team === team) return 'Speaker'
+
+    return 'Checker'
 }
 
 module.exports = {
@@ -123,5 +185,12 @@ module.exports = {
     setTeams,
     setOnePlayerReady,
     roomPlayersAllReady,
-    teamJoin
+    teamJoin,
+    createTurns,
+    userJoinWithTeam,
+    getWordForRoom,
+    setWordForRoom,
+    isUserRequestingTheGuesser,
+    getRoleInTurn,
+    incrementPointer
 }

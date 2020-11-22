@@ -14,10 +14,17 @@ const {
     getUsersInRoom,
     splitTeams,
     setTeams,
-    setOnePlayerReady,
     roomPlayersAllReady,
-    teamJoin
+    userJoinWithTeam,
+    createTurns,
+    isUserRequestingTheGuesser,
+    getRoleInTurn,
+    incrementPointer
 } = require('./utils/room')
+
+const {
+    WORDS_IN_DB
+} = require('./utils/words')
 
 const app = express()
 
@@ -68,7 +75,7 @@ app.get('/api/room/:roomId', async (req, res, next) => {
 })
 
 app.post('/api/room', async (req, res, next) => {
-    const { name } = req.body
+    const { name, owner } = req.body
     if (!name) {
         res.status(400).json({ error: 'A room name must be specified!' })
         return
@@ -76,7 +83,7 @@ app.post('/api/room', async (req, res, next) => {
 
     const db = await mongo.getDb()
     const roomId = getRoomId()
-    const query = { name, roomId }
+    const query = { name, roomId, owner }
     const result = await db.room.update(query, { $setOnInsert: query }, { upsert: true })
 
     if (result) {
@@ -130,20 +137,54 @@ io.on('connection', socket => {
         io.to(room).emit('roomUsers', getRoomUsers(room))
     })
 
-    socket.on('joinRoom', ({ name, roomId, totPlayers }) => {
+    socket.on('joinRoom', ({ name, roomId, totPlayers, team }) => {
         console.log('joiningn ', name)
-        userJoin(socket.id, name, roomId)
+        userJoinWithTeam(socket.id, name, roomId, team)
         socket.join(roomId)
 
         if (roomPlayersAllReady(roomId, totPlayers)) {
             io.to(roomId).emit('startCountdown', { time: 5 })
         }
     })
+    socket.on('setTurns', ({ roomId }) => {
+        const turns = createTurns(roomId)
 
+        // io.to(roomId).emit('turns', { turns })
+    })
+
+    //TODO: this call is probably useles, socket is gonna disconnect and rooms reset
     socket.on('setTeams', ({ teamOne, teamTwo, roomId }) => {
         const newTeams = setTeams(teamOne, teamTwo, roomId)
 
         io.to(roomId).emit('startGame', newTeams)
+    })
+
+    socket.on('getRoles', ({ requestingUser, roomId, team }) => {
+        const hide = isUserRequestingTheGuesser(requestingUser, roomId)
+        socket.emit('roles', { role: getRoleInTurn(hide, team, roomId) })
+    })
+
+    socket.on('getWord', async ({ roomId, seed }) => {
+        console.log('the seed: ', seed)
+        const id = seed % WORDS_IN_DB
+        console.log('the id: ', id)
+        const db = await mongo.getDb()
+        const query = { id: id.toString() }
+        const word = await db.words.findOne(query)
+
+        io.to(roomId).emit('word', {
+            word: word.guess,
+            forbidden: word.forbidden
+        })
+    })
+
+    socket.on('point', ({ team, roomId, point }) => {
+        io.to(roomId).emit('point', { team, point })
+    })
+
+    socket.on('newTurn', ({ roomId }) => {    
+        incrementPointer(roomId)  
+        io.to(roomId).emit('startCountdown', { time: 5 })
     })
 
     socket.on('disconnect', () => {
