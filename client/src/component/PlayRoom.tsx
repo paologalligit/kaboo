@@ -44,7 +44,7 @@ const PlayRoom = ({ socket, router: { location: { search, state: { users, } }, m
     const [teamTwoPoints, setTeamTwoPoints] = useState(0)
     const emptyCard: CardResponse = { word: '', forbidden: [] }
     const [card, setCard] = useState(emptyCard)
-    const [wordCounter, setWordCounter] = useState(30)
+    const [wordCounter, setWordCounter] = useState(2)
     const [role, setRole] = useState('-')
 
     const { roomId, user } = qs.parse(search.substr(1, search.length - 1))
@@ -57,7 +57,7 @@ const PlayRoom = ({ socket, router: { location: { search, state: { users, } }, m
         socket.emit('joinRoom', { name: user, roomId: roomId, totPlayers: users.length, team })
 
         socket.on('startCountdown', ({ time }: CountTime) => {
-            setWordCounter(1)
+            setWordCounter(2)
             setCountDown(true)
             setCount(time)
             startCountDown(time)
@@ -108,19 +108,30 @@ const PlayRoom = ({ socket, router: { location: { search, state: { users, } }, m
         return users.reduce((acc: number, curr: TeamMember) =>  acc + curr.name.length, 0)
     }
 
-    const getWordsLength = () => {
+    const getWordsLength = (card: CardResponse) => {
         const wordSeed = card.word.length
         const forbiddenSeed = card.forbidden.reduce((acc: number, curr: string) => acc + curr.length, 0)
-        return wordSeed + forbiddenSeed
+
+        const date = new Date()
+        const hour = date.getHours()
+        const day = date.getDay()
+
+        return wordSeed + forbiddenSeed + hour + day
     }
 
     // TODO: change the seed generation function to something more complex
     const getSeed = () => {
-        if (card.word) {
-            return getWordsLength()
-        } else {
-            return getUserLength()
-        }
+        let seed
+        setCard(prev => {
+            if (prev.word) {
+                seed = getWordsLength(prev)
+            } else {
+                seed = getUserLength()
+            }
+
+            return prev
+        })
+        return seed
     }
 
     const startWordCounter = (time: number) => {
