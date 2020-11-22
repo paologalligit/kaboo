@@ -23,7 +23,9 @@ const {
 } = require('./utils/room')
 
 const {
-    WORDS_IN_DB
+    WORDS_IN_DB,
+    getGuesserWord,
+    getGuesserForbidden
 } = require('./utils/words')
 
 const app = express()
@@ -164,7 +166,7 @@ io.on('connection', socket => {
         socket.emit('roles', { role: getRoleInTurn(hide, team, roomId) })
     })
 
-    socket.on('getWord', async ({ roomId, seed }) => {
+    socket.on('getWord', async ({ requestingUser, roomId, seed }) => {
         console.log('the seed: ', seed)
         const id = seed % WORDS_IN_DB
         console.log('the id: ', id)
@@ -172,9 +174,11 @@ io.on('connection', socket => {
         const query = { id: id.toString() }
         const word = await db.words.findOne(query)
 
-        io.to(roomId).emit('word', {
-            word: word.guess,
-            forbidden: word.forbidden
+        const hide = isUserRequestingTheGuesser(requestingUser, roomId)
+        console.log('user ', requestingUser, ' is guesser? ', hide)
+        socket.emit('word', {
+            word: hide ? getGuesserWord(word.guess.length) : word.guess,
+            forbidden: hide ? getGuesserForbidden(word.forbidden) : word.forbidden
         })
     })
 
@@ -185,6 +189,10 @@ io.on('connection', socket => {
     socket.on('newTurn', ({ roomId }) => {    
         incrementPointer(roomId)  
         io.to(roomId).emit('startCountdown', { time: 5 })
+    })
+
+    socket.on('ask4word', ({ roomId }) => {
+        io.to(roomId).emit('ask4word')
     })
 
     socket.on('disconnect', () => {

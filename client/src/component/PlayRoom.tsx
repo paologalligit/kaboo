@@ -89,6 +89,10 @@ const PlayRoom = ({ socket, router: { location: { search, state: { users, } }, m
                 })
             }
         })
+
+        socket.on('ask4word', () => {
+            socket.emit('getWord', { requestingUser: user, roomId, seed: getSeed() })
+        })
     }, [])
 
     const startCountDown = (time: number) => {
@@ -105,7 +109,7 @@ const PlayRoom = ({ socket, router: { location: { search, state: { users, } }, m
     }
 
     const getUserLength = () => {
-        return users.reduce((acc: number, curr: TeamMember) =>  acc + curr.name.length, 0)
+        return users.reduce((acc: number, curr: TeamMember) => acc + curr.name.length, 0)
     }
 
     const getWordsLength = (card: CardResponse) => {
@@ -115,7 +119,7 @@ const PlayRoom = ({ socket, router: { location: { search, state: { users, } }, m
         const date = new Date()
         const hour = date.getHours()
         const day = date.getDay()
-
+        console.log('user: ', user, ' seed: ', wordSeed + forbiddenSeed + hour + day, ' role: ', role)
         return wordSeed + forbiddenSeed + hour + day
     }
 
@@ -184,11 +188,13 @@ const PlayRoom = ({ socket, router: { location: { search, state: { users, } }, m
 
     const onCorrectWord = () => {
         socket.emit('point', { team, roomId, point: 1 })
-        socket.emit('getWord', { roomId, seed: getSeed() })
+        // socket.emit('getWord', { roomId, seed: getSeed() })
+        socket.emit('ask4word', { roomId })
     }
     const onErrorWord = () => {
         socket.emit('point', { team, roomId, point: -1 })
-        socket.emit('getWord', { roomId, seed: getSeed() })
+        socket.emit('ask4word', { roomId })
+        // socket.emit('getWord', { roomId, seed: getSeed() })
     }
     const onSkipWord = () => {
 
